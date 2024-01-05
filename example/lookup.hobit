@@ -1,0 +1,25 @@
+data Nat = Z | S Nat
+
+main :: BX ([(Nat,Nat)],Nat) -> BX Nat
+main = \x -> let* (l,k) = x in lookup l k
+
+lookup :: BX [(Nat,Nat)] -> BX Nat -> BX Nat  
+lookup = \l -> \k -> let* (k1,v1) : l1 = l in 
+                      case* k of
+                        k' | (eqNat k' k1) -> v1
+                           with (\x1 -> eqNat x1 v1)
+                           reconciled by (\x0 -> \x1 -> k1)
+                        k' | not (eqNat k' k1) -> lookup l1 k' 
+                           with (\x1 -> not (eqNat x1 v1))
+                           reconciled by (\x0 -> \x1 -> \x0)
+
+eqNat :: Nat -> Nat -> Bool
+eqNat n m = case (n, m) of
+  (Z, Z)       -> True
+  (S n', Z)    -> False
+  (Z, S m')    -> False
+  (S n', S m') -> eqNat n' m'
+
+not :: Bool -> Bool
+not True = False
+not False = True

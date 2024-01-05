@@ -1,0 +1,17 @@
+append :: BX ([a], [a]) -> BX [a]
+append = \l -> case* l of
+                   (l1,l2) ->
+                       append_ l1 l2
+                       with (\x1 -> True)
+                       reconciled by (\x0 -> \x1 -> x0)
+
+append_ :: BX [a] -> BX [a] -> BX [a]
+append_ = \l1 -> \l2 -> case* l1 of
+                            [] -> l2 with (\x1 -> True) reconciled by (\x0 -> \x1 -> [])
+                            x : xs ->
+                                (|x : append_ xs l2|)
+                                with (\x1 -> case x1 of
+                                                 x2 : x3 -> True
+                                                 _ -> False)
+                                reconciled by (\x0 -> \x1 -> case x1 of
+                                                                 x2 : x3 -> x0)

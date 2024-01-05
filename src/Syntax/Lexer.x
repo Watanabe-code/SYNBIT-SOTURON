@@ -25,6 +25,7 @@ $alpha  = [a-zA-Z]
   "#include" | discard | ("reconciled" $white+ "by") | liftInj | lift | lift_ |
   "let*" | "case*" | "if*" | type | data | pure | get | put | default |
   "ifeq*" | eq | "#funs" | "#root" | "#nonRoots" | "#examples"
+--上記にpinを追加
 
 $nbsp = $white # \n
 
@@ -338,6 +339,7 @@ mkReserved input@(_,_,_,str) len = do
     s | "reconciled" `isPrefixOf` s -> return TkReconciledBy
     key ->
       lexError $ "The keyword " ++ key ++ " is not supported now, but is reserved for future."
+--上記にpinを追加
 
 tokenSequence = do
   t <- alexMonadScan
@@ -408,6 +410,7 @@ data Token = TkIf
              --
            | TkFuns
            deriving (Eq, Ord, Show)
+--上記にpinを追加
 
 
 beginComment :: Action

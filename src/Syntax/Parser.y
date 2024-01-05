@@ -106,7 +106,7 @@ import qualified Data.Set as S (toList)
    conId  { L _ (TkConId _) }
    string { L _ (TkString _) }
    number { L _ (TkNumber _) }
-
+--上記にpinを追加
 
 %%
 
@@ -264,6 +264,7 @@ Exp :: { LExp }
   | "\\" SomePat3 "->" Exp                 {% fmap (exLF $1) $ makeAbss $2 $4 }
   | Exp1 "$" Exp                           { makeApp $1 $3 }
   | Exp1                                   { $1 }
+--pinを追加
 
 BAltsBlock :: { Located [(LPat, LGuard, Branch)] }
   : "{" BAlts "}"    { exLL $1 $> $ mkL0 $2 }

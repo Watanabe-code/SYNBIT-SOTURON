@@ -11,6 +11,37 @@ lines_sub str = case str of
   x:rest    -> let (xs, rest') = lines_sub rest
                in (x:xs, rest')
 
+data Nat = Z 
+         | S Nat
+
+length :: [Char] -> Nat
+length l = case l of 
+  x : xs -> S (length xs)
+  []     -> Z
+
+eqOne :: Nat -> Bool
+eqOne (S Z) = True
+eqOne x = False 
+
+moreOne :: Nat -> Bool
+moreOne n = case n of 
+  Z -> False
+  (S Z) -> False
+  _ -> True
+
+lastNl :: [Char] -> [Char] 
+lastNl [] = []
+lastNl ['\n'] = ['\n']
+lastNl (a : x) = lastNl x
+
+nullx :: ([Char],[Char]) -> Bool
+nullx ([],a) = True
+nullx (a,b) = False
+
+nully :: ([Char],[Char]) -> Bool
+nully (a,[]) = True
+nully (a,b) = False 
+
 not :: Bool -> Bool
 not True = False
 not False = True

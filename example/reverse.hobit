@@ -1,0 +1,38 @@
+reverse :: BX [a] -> BX [a]
+reverse = \l -> revAppend Z ![] l
+
+revAppend :: Nat -> BX [a] -> BX [a] -> BX [a]
+revAppend = \n -> \e -> \l -> case* l of
+                                  [] ->
+                                      e
+                                      with (\x1 -> eqN n (length x1))
+                                      reconciled by (\x0 -> \x1 -> [])
+                                  x : xs ->
+                                      revAppend (S n) (|(x : e)|) xs
+                                      with (\x1 -> not (eqN n (length x1)))
+                                      reconciled by (\x0 -> \x1 -> x1)
+
+data Nat = Z | S Nat
+
+eqN :: Nat -> Nat -> Bool
+eqN Z Z = True
+eqN Z (S n) = False
+eqN (S n) Z = False
+eqN (S n) (S n') = eqN n n'
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+length :: [a] -> Nat
+length l = case l of
+  []   -> Z
+  x:xs -> S (length xs)
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False
+
+orElse :: Bool -> Bool -> Bool
+orElse False False = False
+orElse x y = True

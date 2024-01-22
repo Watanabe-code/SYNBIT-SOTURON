@@ -1,0 +1,8 @@
+data Nat = Z | S Nat
+
+snd :: BX (Nat,Nat) -> BX Nat
+snd = \t -> case* t of 
+            (a,b) -> b
+                with (\x1 -> True)
+                reconciled by (\x0 -> \x1 -> x0)
+        

@@ -1,12 +1,15 @@
 linesB_root :: BX String -> BX [String]
-linesB_root str =
-  case* str of
-    str' | last_is_NL str' -> linesB True str'
-                              with (\_ -> True)
-                              reconciled by (\s v -> "\n")
-    str' | otherwise       -> linesB False str'
-                              with (\v -> True)
-                              reconciled by (\s v -> "")
+linesB_root str =     
+  case* (pin str (\x -> !(last_is_NL x))) of 
+    (a,b) -> case* (pin b (\y -> linesB y a)) of
+               (c,d) -> d 
+                       with (\x1 -> True)
+                      reconciled by (\x0 -> \x1 -> x0)
+           with (\x1 -> True)
+           reconciled by (\x0 -> \x1 -> x0)
+--×××linesB_root str = let* p = (pin str (\x -> !(last_is_NL x)))
+--                    in 
+--                     snd (pin (snd p) (\y -> linesB y (fst p)))    
 
 linesB :: Bool -> BX String -> BX [String]
 linesB d str =
@@ -46,11 +49,22 @@ andAlso :: Bool -> Bool -> Bool
 andAlso True True = True
 andAlso x y = False
 
-null :: [String] -> Bool
-null [] = False
-null _ = True 
+null :: [a] -> Bool
+null [] = True
+null _ = False
 
 not :: Bool -> Bool
-not True = False 
+not True = False
 not False = True
 
+snd :: BX (a,b) -> BX b
+snd = \t -> case* t of 
+            (a,b) -> b
+                with (\x1 -> True)
+                reconciled by (\x0 -> \x1 -> x0)
+
+fst :: BX (a,b) -> BX a 
+fst = \t -> case* t of 
+            (a,b) -> a
+                with (\x1 -> True)
+                reconciled by (\x0 -> \x1 -> x0)

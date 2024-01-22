@@ -12,7 +12,7 @@ import           Control.Monad.Reader (ReaderT, ask, local, runReaderT)
 import           Control.Monad.Trans (lift)
 import qualified Data.Map as M
 import           Data.Maybe (fromJust, isNothing)
-import           Debug.Trace (trace)
+import qualified Debug.Trace (trace)
 import           Prelude hiding (id, (.))
 import           Control.Monad.Except (throwError)
 import           Util
@@ -26,6 +26,16 @@ import           Value
 import           Syntax
 import           Lens
 import           RunTimeException
+import System.Directory.Internal.Prelude (hPutBuf)
+
+trace :: [Char] -> a -> a
+trace s = Debug.Trace.trace ("debug| " ++ go s)
+  where 
+    go [] = []
+    go (c:cs) 
+      | c == '\n' = "\ndebug| " ++ go cs 
+      | otherwise = c:go cs 
+
 
 newtype Env = Env (M.Map Name Value)
   deriving (EnvLike Name Value)
@@ -62,8 +72,106 @@ defaultEnv = Env
      [ (Name "inspect", pInspect)
      , (Name "comp", pComp)
      , (Name "orElse", pOrElse)
-     , (Name "showInt", pShowInt)])
+     , (Name "showInt", pShowInt)
+     , (Name "pin", pPin)])--変更
 
+{-
+VBX _ :: Value について            
+VBX (Lens Store Value) 
+↓
+VBX (Lens { runLens :: Store -> Err (Value, Value -> Err Value) })
+
+get :: ((型としての)Lens a b) -> a -> Err b
+get (Lens f) s = fst <$> f s -- Lens(構成子) f(runLens...)(関数本体)
+put :: (Lens a b) -> a -> b -> Err a
+put (Lens f) s v = (snd <$> f s) >>= \refl -> refl v
+
+(Name "pin", TyForAll [a, b] (TyB (TyVar a) --> (TyVar a --> TyB (TyVar b)) --> TyB (TyTup [TyVar a , TyVar b])))
+X = TyB (TyVar a)
+Y = (TyVar a --> TyB (TyVar b))
+Z = TyB (TyTup [TyVar a , TyVar b])
+-}
+
+pPin :: Value--変更 arg : TyB (TyVar a) --> (TyVar a --> TyB (TyVar b)) --> TyB (TyTup [TyVar a , TyVar b])
+{-
+X --> Y 
+VFun $ \hp v -> return $ (...)
+...の部分はY部分のValue
+VFun , rerurn 直後に$ 
+VBX (Lens \Store -> Err (Value , Value -> Err Store))
+-}
+pPin = VFun $ \_ e1 -> case e1 of 
+  VBX l_a -> pure $ VFun $ \hp f1 ->
+    case f1 of 
+      VFun f -> do
+        pure $ VBX $ Lens $ \store -> do  
+          (v_a, r_a) <- runLens l_a store  
+          v2 <- runReaderT (f hp v_a) hp 
+          case v2 of 
+            VBX l_b -> do 
+              v_b <- get l_b store 
+              let 
+                bwd :: Value -> Err Store  
+                bwd (VTup [v_a', v_b']) = do 
+                  store1' <- r_a v_a' 
+                  -- TODO: avoid recomputation of f if v_a = v_a' 
+                  v2' <- runReaderT (f hp v_a') hp 
+                  case v2' of 
+                    VBX l_b' -> do 
+                      store2' <- put l_b' store v_b'
+                      mergeStoreM "pin (bwd)" store1' store2'
+                    _ -> throwError "pin (bwd): the second argument must return a bx value"
+                bwd _ = throwError "pin (bwd): shape mismatch."
+              pure (VTup [v_a, v_b], bwd)
+            _ -> 
+              throwError "pin (fwd): the second argument must return a bx value"
+      _ ->
+        throwError "pin: the second argument must be a function"
+  _ -> 
+    throwError "pin: the first argument must be a BX value" 
+-- pPin = VFun $ \_ e1 -> case e1 of -- e1 : Value 
+--     (VBX l1) -> return -- l1 : Lens Store Value 
+--       $ VFun $ \hp f1 -> case f1 of -- f1 : Value
+--         (VFun f) -> return -- f : HeapPoiter -> Value -> E Value
+--           $ VBX (Lens $ \s ->  -- s : Store
+--                   get l1 s >>= \v1 -> -- v1 : Value
+--                   case f hp v1 of  
+--                     (VBX l2) -> -- l2 : Lens Store Value
+--                       get l2 s >>= \v2 -> -- v2 : Value
+--                       return (VCon NTup [v1,v2],p)-- p : Value -> Err Store
+--                       where
+--                         p = \z -> case z of  
+--                           (VCon NTup [a,b]) -> 
+--                             put l1 s a >>= \ps1 -> -- ps1 : Store
+--                             case f hp a of 
+--                               (VBX l3) -> 
+--                                 put l3 s b >>= \ps2 -> -- ps2 :  Store
+--                                   mergeStoreM "msg" ps1 ps2 
+--                               _ -> throwError  "Error5" 
+--                           _ -> throwError "Error4"
+--                     _ -> throwError "Error3"
+--                     )
+--         _ -> throwError "Error2"
+--     _ -> throwError "Error1"
+
+
+{-TyB (Tyvar a) 型のValueについて
+Valueの中で双方向型のValueは(VBX _)しかないので，
+-> VBX (Lens' Store Value)が決まる．Len' は型としての
+ここで　(Lens' Store Value)型の値はLens { runLens :: Store -> Err (Value, Value -> Err Store) }
+という形をしていて，Lens {関数}である．
+今回,Ba 型の値を受け取って，a型の値を使いたいので
+let a = (get or put) (Lens _) Baとすることでa型の値を使える？という予測
+
+TyB (Tyvar a)というのは手書きでいうところの(B a)型に対応だから，実際には
+B int , B [Bool] , B Natにインスタンス化されるがそれは，どのような関数なのか，
+
+VBX ()
+
+-}
+   
+
+--(Name "showInt", TyInt --> TyList TyChar)
 pShowInt :: Value
 pShowInt = VFun
   $ \_ v -> case v of
@@ -72,19 +180,26 @@ pShowInt = VFun
     _
       -> throwError $ "The argument of showInt must be a number: " ++ show v
 
-pComp :: Value
+{-( Name "comp"
+    , TyForAll
+        [a, b, c]
+        (TyArr (TyVar b) (TyVar c) =f1
+         --> TyArr (TyVar a) (TyVar b) =f2 
+         --> TyArr (TyVar a) (TyVar c)) =f3)-}
+pComp :: Value 
 pComp = VFun
-  $ \k1 v1 -> return
+  $ \k1 v1 -> return --v1 = f1 
   $ VFun
-  $ \k2 v2 -> case (v1, v2) of
-    (VFun f, VFun g) -> return
-      $ VFun
+  $ \k2 v2 -> case (v1, v2) of --v2 = f2 
+    (VFun f, VFun g) -> return -- f1,f2ともtyArrでそれは(VFun _)の形をしている
+      $ VFun -- f3の定義，f3はTyArr型なので，それはVFun _ のValueと一致している．
         (\k3 v3 -> do
            v' <- g k3 v3
-           f k3 v')
+           f k3 v') -- f :: (hp -> val -> E val)
     (_, _)           -> throwError
       $ "Both operands of \".\" must be functions: " ++ show (v1, v2)
 
+--(Name "orElse", TyForAll [] (TyBool --> TyBool --> TyBool))
 pOrElse :: Value
 pOrElse = VFun
   $ \_ v1 -> return
@@ -94,10 +209,13 @@ pOrElse = VFun
     (VTrue, _) -> VTrue
     _          -> v2
 
+--(Name "inspect", TyForAll [a] (TyB (TyVar a) --> TyB (TyVar a)))
 pInspect :: Value
-pInspect = VFun
-  $ \_ v -> case v of
-    VBX b -> return $ VBX (fromGetPut get put . b)
+pInspect = VFun  -- VFun (HeapPointer -> Value -> E Value)
+  $ \_ v{-:Value (=~(TyB _))-} -> case v of 
+    VBX b -> return $ VBX (fromGetPut get put . b) -- ここでbodyが(VBX _ -> VBX _ )だと分かる．
+    -- fromGetPut get put : Lens' x y であり，b : Lens' _ _ である．
+    -- したがって,(TyB _ --> TyB _ )のときは関数合成"."によって表せる?
     _     -> throwError $ "The argument of inspect must be bidirectional."
   where
     get x = trace ("in get: " ++ show x) x

@@ -22,12 +22,16 @@ import           Err
 import           EnvLike
 
 type HeapPointer = Loc
+-- HeapPointer型の値はLoc Int (Locはコンストラクター)
+-- 例 Loc 5 , Loc 2 ...
 
 data Value = VCon Name [Value]
            | VNum Integer
            | VChar Char
            | VBX (Lens Store Value)
            | VFun (HeapPointer -> Value -> E Value)
+-- VBX (Lens Store Value) 
+-- VBX (Lens {Store -> Err (Value , Value -> Err Store)})
 
 isFO :: Value -> Bool
 isFO (VBX _) = False

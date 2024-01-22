@@ -106,7 +106,7 @@ import qualified Data.Set as S (toList)
    conId  { L _ (TkConId _) }
    string { L _ (TkString _) }
    number { L _ (TkNumber _) }
---上記にpinを追加
+
 
 %%
 

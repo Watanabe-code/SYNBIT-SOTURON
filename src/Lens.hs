@@ -12,7 +12,12 @@ import Err
 -- partial lens 
 newtype Lens a b =
   Lens { runLens :: a -> Err (b, b -> Err a) }
-
+{-
+(Lens a b)型の定義で，= Lens ... のLensは構成子
+exam) newtype Nat = N Int 
+実質的には = Lens { runLens }
+でrunLensの部分は :: a -> Err (b, b -> Err a) 型の関数が来る．
+-} 
 instance NFData (Lens a b) where
   rnf (Lens _) = ()
 

@@ -1,17 +1,29 @@
-data Nat = Z | S Nat
+data Nat = Z
+         | S Nat
 
 main :: BX ([(Nat,Nat)],Nat) -> BX Nat
-main = \x -> let* (l,k) = x in lookup l k
+main = \x -> case* x of 
+              (l,k) -> snd (pin l (\y -> lookup y k))
+                 reconciled by (\s v -> s) 
 
-lookup :: BX [(Nat,Nat)] -> BX Nat -> BX Nat  
-lookup = \l -> \k -> let* (k1,v1) : l1 = l in 
-                      case* k of
-                        k' | (eqNat k' k1) -> v1
-                           with (\x1 -> eqNat x1 v1)
-                           reconciled by (\x0 -> \x1 -> k1)
-                        k' | not (eqNat k' k1) -> lookup l1 k' 
-                           with (\x1 -> not (eqNat x1 v1))
-                           reconciled by (\x0 -> \x1 -> \x0)
+-- pin :: Ba -> (a -> Bb) -> B (a,b)
+
+lookup :: [(Nat,Nat)] -> BX Nat -> BX Nat  
+lookup = \l -> \k -> case l of 
+                     (k1,v1) : l1 -> 
+                                    case* k of
+                                    k' | eqNat k' k1 -> !v1
+                                        with (\x1 -> eqNat x1 v1)
+                                        reconciled by (\x0 -> \x1 -> k1)
+                                    k' | not (eqNat k' k1) -> lookup l1 k' 
+                                        with (\x1 -> not (eqNat x1 v1))
+                                        reconciled by (\x0 -> \x1 -> (S k1))    
+
+snd :: BX (a,b) -> BX b
+snd = \t -> case* t of 
+            (a,b) -> b
+              with (\x1 -> True)
+              reconciled by (\x0 -> \x1 -> x0)
 
 eqNat :: Nat -> Nat -> Bool
 eqNat n m = case (n, m) of
@@ -23,3 +35,25 @@ eqNat n m = case (n, m) of
 not :: Bool -> Bool
 not True = False
 not False = True
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False
+
+orElse :: Bool -> Bool -> Bool
+orElse False False = False
+orElse x y = True
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2at (n - 1))
+
+
+-- pink :: Ba -> (a -> Bb) -> (Ba -> Bb -> Bc) -> Bc
+-- main :: BX ([(Nat,Nat)],Nat) -> BX Nat
+-- main = \x -> case* x of
+--             (l,k) -> pink l (\y -> lookup_ y k) (\p -> \q -> f p q)
+--             //p :: B[(Nat,Nat)] 
+--             //q :: B Nat
+--             //f p q :: B Nat
+

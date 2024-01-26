@@ -1,0 +1,6 @@
+split :: [(a,b)] -> ([a],[b])
+split = \l -> case l of
+              [] -> ([],[])
+              (x,y) : rest -> case (split rest) of
+                              (left ,right) -> (x : left , y : right)
+

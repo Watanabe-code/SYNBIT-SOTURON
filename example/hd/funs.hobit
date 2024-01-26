@@ -1,0 +1,3 @@
+hd :: [a] -> a
+hd l = let (s : rest) = l 
+       in s

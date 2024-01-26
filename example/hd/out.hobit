@@ -1,0 +1,5 @@
+hd :: BX [a] -> BX a
+hd = \l -> case* l of
+               s : rest -> s 
+               with (\x1 -> True) 
+               reconciled by (\x0 -> \x1 -> x0)

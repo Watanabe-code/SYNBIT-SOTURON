@@ -1,0 +1,14 @@
+forall :: (a -> Bool) -> BX [a] -> BX Bool
+forall = \f -> \l -> case* l of  
+                     [] -> !True
+                           with (\x1 ->)
+                           reconciled by (\x0 -> \x1 -> )   
+                     s : rest -> !(andAlso (f s) (forall f rest))
+                                 with (\x1 ->)
+                                 reconciled by (\x0 -> \x1 -> f^-1 x1) 
+
+--いずれにせよ難しい
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False

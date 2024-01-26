@@ -1,0 +1,19 @@
+split :: BX [(a, b)] -> BX ([a], [b])
+split = \l -> case* l of
+                  [] ->
+                      (|![], ![]|)
+                      with (\x1 -> case x1 of
+                                       ([],[]) -> True
+                                       _ -> False)
+                      reconciled by (\x0 -> \x1 -> [])
+                  (x,y) : rest ->
+                      case* split rest of
+                          (left,right) ->
+                              (|(|x : left|), (|y : right|)|)
+                              with (\x1 -> True)
+                              reconciled by (\x0 -> \x1 -> x0)
+                      with (\x1 -> case x1 of
+                                       (x2 : x3,x4 : x5) -> True
+                                       _ -> False)
+                      reconciled by (\x0 -> \x1 -> case x1 of
+                                                       (x2 : x3,x4 : x5) -> x0)

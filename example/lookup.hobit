@@ -4,6 +4,7 @@ data Nat = Z
 main :: BX ([(Nat,Nat)],Nat) -> BX Nat
 main = \x -> case* x of 
               (l,k) -> snd (pin l (\y -> lookup y k))
+                 with (\v -> True)
                  reconciled by (\s v -> s) 
 
 -- pin :: Ba -> (a -> Bb) -> B (a,b)

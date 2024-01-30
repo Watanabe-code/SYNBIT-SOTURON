@@ -1,0 +1,37 @@
+data Nat = Z | S Nat
+
+-- nub [1,1,2,3,1,3] = [1,2,3]
+nub :: [Nat] -> [Nat]
+nub = \l -> case l of
+              [] -> []
+              s : rest -> insert s (nub rest)
+
+insert :: Nat -> [Nat] -> [Nat]
+insert = \s -> \l -> case l of
+                       [] -> [s]
+                       a : b -> case s of
+                                  s' | eqNat s a -> l 
+                                  s' | moreNat s a -> s : l
+                                  s' | not (moreNat s a)-> a : insert s b 
+                                   
+eqNat :: Nat -> Nat -> Bool
+eqNat n m = case (n, m) of
+  (Z, Z)       -> True
+  (S n', Z)    -> False
+  (Z, S m')    -> False
+  (S n', S m') -> eqNat n' m'
+
+moreNat :: Nat -> Nat -> Bool
+moreNat n m = case (n, m) of
+  (Z, Z)       -> False
+  (S n', Z)    -> False
+  (Z, S m')    -> True
+  (S n', S m') -> moreNat n' m'
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))

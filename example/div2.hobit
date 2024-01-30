@@ -1,0 +1,50 @@
+data Nat = Z | S Nat 
+
+div2 :: Nat -> Nat
+div2 n = case n of
+  Z        -> Z
+  S Z      -> S Z
+  S (S n') -> div2 n'
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+div2mainB :: BX Nat -> BX Nat
+div2mainB = \n -> snd (pin n (\x -> div2subB x n))
+
+dib2subB :: Nat -> BX Nat -> BX Nat  
+div2subB = \x -> \n -> case* n of
+                        Z        -> Z
+                                    with (\x1 -> not (more2 x))
+                                    reconciled by (\x0 -> \x1 ->)
+                        S Z      -> S Z
+                                    with (\x1 -> not (more2 x))
+                                    reconciled by (\x0 -> \x1 ->)
+                        S (S n') -> div2subB (minus2 x) n'
+                                    with (\x1 -> more2 x)
+                                    reconciled by (\x0 -> \x1 ->)
+
+minus2 :: Nat -> Nat 
+minus2 n = case n of
+  Z = Z
+  S Z = Z
+  S (S n') = minus2 n'
+
+more2 :: Nat -> Bool 
+more2 n = case n of
+  Z = False
+  S Z = False
+  S (S _) = True
+
+snd :: BX (a,b) -> BX b
+snd = \t -> case* t of 
+            (a,b) -> b
+              with (\x1 -> True)
+              reconciled by (\x0 -> \x1 -> x0)
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+

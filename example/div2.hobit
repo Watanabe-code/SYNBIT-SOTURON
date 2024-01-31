@@ -1,50 +1,52 @@
-data Nat = Z | S Nat 
+div2B :: BX Nat -> BX Nat
+div2B s = 
+  case* (pin s (\x -> !(isEven x))) of
+    (a,b) -> case* (pin b (\y -> div2subB y a)) of 
+               (c,d) -> d 
+                        with (\x1 -> True)
+                        reconciled by (\x0 -> \x1 -> x0)
+             with (\x1 -> True)
+             reconciled by (\x0 -> \x1 -> x0)            
 
-div2 :: Nat -> Nat
-div2 n = case n of
-  Z        -> Z
-  S Z      -> S Z
-  S (S n') -> div2 n'
+div2subB :: Bool -> BX Nat -> BX Nat 
+dib2subB b n = 
+  case* n of
+    Z -> Z
+         with (\x1 -> andAlso b (isZ x1)) 
+         reconciled by (\x0 -> \x1 -> Z)
+    S Z -> Z
+           with (\x1 -> andAlso (not b) (isZ x1))
+           reconciled by (\x0 -> \x1 -> (S Z))
+    S (S n') -> S (div2subB b n')
+                with (\x1 -> not (isZ x1))
+                reconciled by (\x0 -> \x1 -> (S (S Z)))
 
-int2nat :: Int -> Nat
-int2nat 0 = Z
-int2nat n = S (int2nat (n - 1))
+data Nat = Z 
+         | S Nat 
 
-div2mainB :: BX Nat -> BX Nat
-div2mainB = \n -> snd (pin n (\x -> div2subB x n))
-
-dib2subB :: Nat -> BX Nat -> BX Nat  
-div2subB = \x -> \n -> case* n of
-                        Z        -> Z
-                                    with (\x1 -> not (more2 x))
-                                    reconciled by (\x0 -> \x1 ->)
-                        S Z      -> S Z
-                                    with (\x1 -> not (more2 x))
-                                    reconciled by (\x0 -> \x1 ->)
-                        S (S n') -> div2subB (minus2 x) n'
-                                    with (\x1 -> more2 x)
-                                    reconciled by (\x0 -> \x1 ->)
-
-minus2 :: Nat -> Nat 
-minus2 n = case n of
-  Z = Z
-  S Z = Z
-  S (S n') = minus2 n'
-
-more2 :: Nat -> Bool 
-more2 n = case n of
-  Z = False
-  S Z = False
-  S (S _) = True
-
-snd :: BX (a,b) -> BX b
-snd = \t -> case* t of 
-            (a,b) -> b
-              with (\x1 -> True)
-              reconciled by (\x0 -> \x1 -> x0)
+isZ :: Nat -> Bool
+isZ Z = True
+isZ _ = False
 
 not :: Bool -> Bool
 not True = False
 not False = True
 
+div2 :: Nat -> Nat
+div2 n = case n of
+  Z        -> Z
+  S Z      -> Z
+  S (S n') -> S (div2 n')
 
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+isEven :: Nat -> Bool
+isEven Z = True
+isEven (S Z) = False
+isEven (S (S n)) = isEven n
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False

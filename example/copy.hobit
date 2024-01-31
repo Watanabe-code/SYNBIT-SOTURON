@@ -1,0 +1,5 @@
+copy :: BX a -> BX (a,a)
+copy = \x -> case* x of
+               x' -> (x',x')
+                 with (\x1 -> True)
+                 reconciled by (\x0 -> \x1 -> x0)

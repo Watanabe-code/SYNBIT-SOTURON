@@ -19,7 +19,7 @@ lookup = \l -> \k -> case l of
                                     k' | not (eqNat k' k1) -> lookup l1 k' 
                                         with (\x1 -> not (eqNat x1 v1))
                                         reconciled by (\x0 -> \x1 -> (S k1))    
-
+                                        
 snd :: BX (a,b) -> BX b
 snd = \t -> case* t of 
             (a,b) -> b

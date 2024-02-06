@@ -1,0 +1,12 @@
+data Nat = Z | S Nat
+
+plusone :: BX Nat -> BX Nat 
+plusone n = 
+  case* n of
+    m -> (S m)
+         with (\x1 -> True)
+         reconciled by (\x0 -> \x1 -> x0)   
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))

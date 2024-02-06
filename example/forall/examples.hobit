@@ -1,0 +1,12 @@
+linesB_root :: BX String -> BX [String]
+linesB_root str =     
+  case* (pin str (\x -> !(last_is_NL x))) of 
+    (a,b) -> case* (pin b (\y -> linesB y a)) of
+               (c,d) -> d 
+                       with (\x1 -> True)
+                      reconciled by (\x0 -> \x1 -> x0)
+           with (\x1 -> True)
+           reconciled by (\x0 -> \x1 -> x0)
+--×××linesB_root str = let* p = (pin str (\x -> !(last_is_NL x)))
+--                    in 
+--                     snd (pin (snd p) (\y -> linesB y (fst p)))

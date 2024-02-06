@@ -1,5 +1,5 @@
-linesB_root :: BX String -> BX [String]
-linesB_root str =     
+linesB_main :: BX String -> BX [String]
+linesB_main str =     
   case* (pin str (\x -> !(last_is_NL x))) of 
     (a,b) -> case* (pin b (\y -> linesB y a)) of
                (c,d) -> d 
@@ -9,7 +9,10 @@ linesB_root str =
            reconciled by (\x0 -> \x1 -> x0)
 --×××linesB_root str = let* p = (pin str (\x -> !(last_is_NL x)))
 --                    in 
---                     snd (pin (snd p) (\y -> linesB y (fst p)))    
+--                     snd (pin (snd p) (\y -> linesB y (fst p)))
+
+linesB_obse :: BX String -> BX [String]
+linesB_obse str = obser str (last_is_NL) (linesB)
 
 linesB :: Bool -> BX String -> BX [String]
 linesB d str =
@@ -68,3 +71,12 @@ fst = \t -> case* t of
             (a,b) -> a
                 with (\x1 -> True)
                 reconciled by (\x0 -> \x1 -> x0)
+
+obser :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
+obser e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
+                  (p,q) -> case* (pin q (\r -> e2 r p)) of 
+                             (s,t) -> t 
+                                      with (\x1 -> True)
+                                      reconciled by (\x0 -> \x1 -> x0)
+                           with (\x1 -> True)
+                           reconciled by (\x0 -> \x1 -> x0) 

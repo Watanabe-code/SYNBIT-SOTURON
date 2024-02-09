@@ -74,55 +74,9 @@ defaultEnv = Env
      , (Name "comp", pComp)
      , (Name "orElse", pOrElse)
      , (Name "showInt", pShowInt)
-     , (Name "pin", pPin)
-     , (Name "observe", pObserve)])--変更
+     , (Name "pin", pPin)])--変更
 
 
-pObserve :: Value
-pObserve = VFun $ \_ e1 -> case e1 of
-  VBX l_a -> pure $ VFun $ \_ f1 ->
-    case f1 of 
-      VFun f -> pure $ VFun $ \hp f2 -> 
-        case f2 of 
-          VFun g -> do
-            pure $ VBX $ Lens $ \store -> do
-              (v_a , r_a) <- runLens l_a store
-              v_b <- runReaderT (f hp v_a) hp
-              f_3 <- runReaderT (g hp v_b) hp
-              case f_3 of
-                VFun h -> do
-                  v_c <- runReaderT (h hp e1) hp
-                  case v_c of 
-                    VBX l_c -> do
-                      (v_c, r_c) <- runLens l_c store
-                      let
-                        bwd :: Value -> Err Store
-                        bwd (VTup [v_a', v_c']) = do
-                          store1' <- r_a v_a'
-                          v1' <- runReaderT (f hp v_a') hp
-                          v2' <- runReaderT (g hp v1') hp
-                          case v2' of
-                            VFun h' -> do
-                              vc' <- runReaderT (h' hp v_a') hp
-                              case vc' of
-                                VBX l_c' -> do
-                                  store3' <- put l_c' store v_c'
-                                  mergeStoreM "observe (bwd)" store1' store3'
-                                _ -> throwError "Error"    
-                            _ -> throwError "Error"   
-                        bwd _ = throwError "observe (bwd): shape mismatch." 
-                      pure (VTup [v_a , v_c],bwd)
-                    _ -> throwError "observe: the third argument's type is incorrect"
-                _ -> throwError "observe: the third argument's type is incorrect"
-                -- X : Value , Y : Value -> Err Store
-          -- g : Loc -> Value -> EValue
-          -- EValueはrunReaderTによってErr Valueにできて，
-          -- Err ValueはBadまたはOkがついたValue型で，問題がなければValue
-          -- 型として扱える．gをrunReaderTして得られるValueは
-          -- b -> B c型の関数である．つまり，VFun $ \_  
-          _ -> throwError "observe: the third argument must be a function"
-      _ -> throwError "observe: the second argument must be a function" 
-  _ -> throwError "observe: the first argument must be a BX value" 
 {-
 VBX _ :: Value について            
 VBX (Lens Store Value) 

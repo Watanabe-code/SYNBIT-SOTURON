@@ -1,0 +1,54 @@
+div2B :: BX Nat -> BX Nat
+div2B s = 
+  case* (pin s (\x -> !(mod3 x))) of
+    (a,b) -> case* (pin b (\y -> div2subB y a)) of 
+               (c,d) -> d 
+                        with (\x1 -> True)
+                        reconciled by (\x0 -> \x1 -> x0)
+             with (\x1 -> True)
+             reconciled by (\x0 -> \x1 -> x0)    
+                    
+div2subB :: Nat -> BX Nat -> BX Nat 
+dib2subB m n = 
+  case* n of
+    Z            -> Z
+                    with (\x1 -> andAlso (m == Z) (isZ x1)) 
+                    reconciled by (\x0 -> \x1 -> Z)
+    S Z          -> Z
+                    with (\x1 -> andAlso (m == S Z) (isZ x1))
+                    reconciled by (\x0 -> \x1 -> S Z)
+    S (S Z)      -> S (S Z)
+                    with (\x1 -> andAlso (m == S (S Z)) (isZ x1))
+                    reconciled by (\x0 -> \x1 -> S (S Z))
+    S (S (S n')) -> S (div2subB m n')
+                    with (\x1 -> not (isZ x1))
+                    reconciled by (\x0 -> \x1 -> S (S (S Z)))
+
+
+data Nat = Z 
+         | S Nat 
+
+isZ :: Nat -> Bool
+isZ Z = True
+isZ _ = False
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+mod3 :: Nat -> Nat
+mod3 n = case n of
+  Z            -> Z 
+  S Z          -> S Z 
+  S (S Z)      -> S (S Z)
+  S (S (S n')) -> mod3 n'
+ 
+
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False

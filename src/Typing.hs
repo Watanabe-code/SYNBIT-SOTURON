@@ -72,8 +72,7 @@ defaultTyEnv = E.fromList
          --> TyArr (TyVar a) (TyVar c)))
   , (Name "orElse", TyForAll [] (TyBool --> TyBool --> TyBool))
   , (Name "inspect", TyForAll [a] (TyB (TyVar a) --> TyB (TyVar a)))
-  , (Name "pin", TyForAll [a, b] (TyB (TyVar a) --> (TyVar a --> TyB (TyVar b)) --> TyB (TyTup [TyVar a , TyVar b])))
-  , (Name "observe", TyForAll [a, b, c] (TyB (TyVar a) --> (TyVar a --> TyVar b) --> ( TyVar b --> TyB (TyVar a) --> TyB (TyVar c)) --> TyB (TyTup [TyVar a, TyVar c]) ))]--変更
+  , (Name "pin", TyForAll [a, b] (TyB (TyVar a) --> (TyVar a --> TyB (TyVar b)) --> TyB (TyTup [TyVar a , TyVar b])))]--変更
   where
     a = BoundTv (Name "a")
 

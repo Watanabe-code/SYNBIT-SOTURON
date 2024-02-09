@@ -50,11 +50,3 @@ int2nat 0 = Z
 int2nat n = S (int2nat (n - 1))
 
 
--- pink :: Ba -> (a -> Bb) -> (Ba -> Bb -> Bc) -> Bc
--- main :: BX ([(Nat,Nat)],Nat) -> BX Nat
--- main = \x -> case* x of
---             (l,k) -> pink l (\y -> lookup_ y k) (\p -> \q -> f p q)
---             //p :: B[(Nat,Nat)] 
---             //q :: B Nat
---             //f p q :: B Nat
-

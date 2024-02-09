@@ -12,7 +12,7 @@ linesB_main str =
 --                     snd (pin (snd p) (\y -> linesB y (fst p)))
 
 linesB_obse :: BX String -> BX [String]
-linesB_obse str = obser str (last_is_NL) (linesB)
+linesB_obse str = observe str (last_is_NL) (linesB)
 
 linesB :: Bool -> BX String -> BX [String]
 linesB d str =
@@ -72,8 +72,8 @@ fst = \t -> case* t of
                 with (\x1 -> True)
                 reconciled by (\x0 -> \x1 -> x0)
 
-obser :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
-obser e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
+observe :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
+observe e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
                   (p,q) -> case* (pin q (\r -> e2 r p)) of 
                              (s,t) -> t 
                                       with (\x1 -> True)

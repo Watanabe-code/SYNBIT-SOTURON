@@ -1,15 +1,8 @@
 div2B :: BX Nat -> BX Nat
-div2B s = 
-  case* (pin s (\x -> !(isEven x))) of
-    (a,b) -> case* (pin b (\y -> div2subB y a)) of 
-               (c,d) -> d 
-                        with (\x1 -> True)
-                        reconciled by (\x0 -> \x1 -> x0)
-             with (\x1 -> True)
-             reconciled by (\x0 -> \x1 -> x0)    
-                    
+div2B s = observe s (isEven) (div2subB)
+
 div2subB :: Bool -> BX Nat -> BX Nat 
-dib2subB b n = 
+div2subB b n = 
   case* n of
     Z        -> Z
                 with (\x1 -> andAlso b (isZ x1)) 
@@ -19,8 +12,7 @@ dib2subB b n =
                 reconciled by (\x0 -> \x1 -> S Z)
     S (S n') -> S (div2subB b n')
                 with (\x1 -> not (isZ x1))
-                reconciled by (\x0 -> \x1 -> S (S Z))
-
+                reconciled by (\x0 -> \x1 -> if b then (S (S Z)) else (S (S (S Z))))
 
 data Nat = Z 
          | S Nat 
@@ -43,7 +35,6 @@ int2nat :: Int -> Nat
 int2nat 0 = Z
 int2nat n = S (int2nat (n - 1))
 
-
 isEven :: Nat -> Bool
 isEven Z = True
 isEven (S Z) = False
@@ -52,3 +43,12 @@ isEven (S (S n)) = isEven n
 andAlso :: Bool -> Bool -> Bool
 andAlso True True = True
 andAlso x y = False
+
+observe :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
+observe e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
+                  (p,q) -> case* (pin q (\r -> e2 r p)) of 
+                             (s,t) -> t 
+                                      with (\x1 -> True)
+                                      reconciled by (\x0 -> \x1 -> x0)
+                           with (\x1 -> True)
+                           reconciled by (\x0 -> \x1 -> x0)

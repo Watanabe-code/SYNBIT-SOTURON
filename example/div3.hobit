@@ -1,28 +1,23 @@
-div2B :: BX Nat -> BX Nat
-div2B s = 
-  case* (pin s (\x -> !(mod3 x))) of
-    (a,b) -> case* (pin b (\y -> div2subB y a)) of 
-               (c,d) -> d 
-                        with (\x1 -> True)
-                        reconciled by (\x0 -> \x1 -> x0)
-             with (\x1 -> True)
-             reconciled by (\x0 -> \x1 -> x0)    
+div3B :: BX Nat -> BX Nat
+div3B s = observe s mod3 (div3subB)   
                     
-div2subB :: Nat -> BX Nat -> BX Nat 
-dib2subB m n = 
+div3subB :: Nat -> BX Nat -> BX Nat 
+div3subB m n = 
   case* n of
     Z            -> Z
-                    with (\x1 -> andAlso (m == Z) (isZ x1)) 
+                    with (\x1 -> andAlso (eqNat m Z) (isZ x1)) 
                     reconciled by (\x0 -> \x1 -> Z)
     S Z          -> Z
-                    with (\x1 -> andAlso (m == S Z) (isZ x1))
+                    with (\x1 -> andAlso (eqNat m (S Z)) (isZ x1))
                     reconciled by (\x0 -> \x1 -> S Z)
-    S (S Z)      -> S (S Z)
-                    with (\x1 -> andAlso (m == S (S Z)) (isZ x1))
+    S (S Z)      -> Z
+                    with (\x1 -> andAlso (eqNat m (S (S Z))) (isZ x1))
                     reconciled by (\x0 -> \x1 -> S (S Z))
-    S (S (S n')) -> S (div2subB m n')
+    S (S (S n')) -> S (div3subB m n')
                     with (\x1 -> not (isZ x1))
-                    reconciled by (\x0 -> \x1 -> S (S (S Z)))
+                    reconciled by (\x0 -> \x1 -> if (eqNat m Z) then S (S (S Z)) 
+                                                 else if (eqNat m (S Z)) then S (S (S (S Z)))
+                                                 else S (S (S (S (S Z)))))
 
 
 data Nat = Z 
@@ -46,9 +41,23 @@ mod3 n = case n of
   S Z          -> S Z 
   S (S Z)      -> S (S Z)
   S (S (S n')) -> mod3 n'
- 
-
 
 andAlso :: Bool -> Bool -> Bool
 andAlso True True = True
 andAlso x y = False
+
+eqNat :: Nat -> Nat -> Bool
+eqNat n m = case (n, m) of
+  (Z, Z)       -> True
+  (S n', Z)    -> False
+  (Z, S m')    -> False
+  (S n', S m') -> eqNat n' m'
+
+observe :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
+observe e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
+                  (p,q) -> case* (pin q (\r -> e2 r p)) of 
+                             (s,t) -> t 
+                                      with (\x1 -> True)
+                                      reconciled by (\x0 -> \x1 -> x0)
+                           with (\x1 -> True)
+                           reconciled by (\x0 -> \x1 -> x0)

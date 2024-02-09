@@ -1,0 +1,39 @@
+data Nat = Z | S Nat 
+
+newNat :: Nat -> BX Nat
+newNat n = case n of
+  Z -> (|Z|)
+  S n' -> (|S (newNat n')|)
+
+deleteNat :: Nat -> BX Nat -> BX ()
+deleteNat n bm = case n of
+  Z -> case* bm of 
+         Z -> ()
+              with (\x1 -> True)
+              reconciled by (\x0 -> \x1 -> x0)
+  S n' -> let* (S m') = bm in deleteNat n' m'
+
+idNat :: BX Nat -> BX Nat 
+idNat n0 = let* (n1,m) = pin n0 (\x -> newNat x) in 
+           let* (n2,()) = pin n1 (\y -> deleteNat y m) in 
+           n2
+
+--最初のpinではBX Natの複製をしている.二つ目のpinでは複製した二つのデータが一致していれば，
+--一つにしている．そのため，直観的には当然機能してほしい関数である．Sparclではこれが通るが，
+--HOBiTでは動作しない．これには，pinの動作が関係している．pin導入以前のHOBiTでは，put実行の際に
+--getを行って，実行ができたら，put実行を行う．しかし，上記コードのdeleteNatで比較される2つのデータは
+--一つめの要素はputに対する第1引数であり，これは，オリジナルのソースである．つまり，更新されたデータと
+--更新前のソースで比較を行っているので，当然deleteNatの部分で実行が失敗する．
+--newNatとdeleteNatはSPARCLでのnewとdeleteに対応する．newの理解は，deleteの最後の型を
+--反転させたものと理解するほうがよい．結局，newとかdeleteはそれが"良い"双方向変換を形成しているか
+--を確かめているだけの関数?という認識を得た．これについては再度SPARClの論文を読んでみるとさらに理解が進むだろう．
+--また，HOBiTでもliftを扱うことができる！これについては，少し手を動かしてみて，SPARCLとの違い等も踏まえ
+--確認してみるとよい．
+--そして，この齟齬を解消するためには，HOBiT上のlensの型を変更することが考えられる．
+--現時点のHOBiTでは，Lens s t = s -> Err(t , t -> Err s)となっていて，この定義では，
+--put実行の前にgetを行う．(これは型から分かるというわけではないが，，，)このLesnの型について
+--は，松田先生のメールを確認する．そして，メールの最後に示されたLensの型の場合は，うまく行きそうであるとのこと．
+--この齟齬については,Sparclが順方向と逆方向の計算に依存がないため，これを例示してあげれば説明ができそうである．
+--pinを追加した場合のwell-behavednessについても後に議論を踏まえ，論文に提示したい．
+--また，observeの他の例としては，zipがあげられる．これについては写真を参考にして，コードの記述試みるとよいだろう．
+--もし，可能であればnubについても議論したい．

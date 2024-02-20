@@ -1,0 +1,25 @@
+
+addinj :: Int -> BX Int -> BX Int
+addinj n = liftInj (\x -> x + n)(\x -> x - n)
+
+addlift :: Int -> BX Int -> BX Int
+addlift n = lift (\x -> x + n) (\x -> \y -> x - y)
+--lift ()(...)の部分はgetしたものx,update view yを受け取って演算
+
+data Nat = Z | S Nat
+
+eqNat :: Nat -> Nat -> Bool
+eqNat n m = case (n, m) of
+  (Z, Z)       -> True
+  (S n', Z)    -> False
+  (Z, S m')    -> False
+  (S n', S m') -> eqNat n' m'
+
+deleteNat :: Nat -> BX Nat -> BX ()
+deleteNat t = liftInj (\x -> case (eqNat t x) of True -> ())(\x -> t)
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+

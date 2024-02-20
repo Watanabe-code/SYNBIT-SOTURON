@@ -1,22 +1,20 @@
 data Nat = Z
          | S Nat
 
-main :: BX ([(Nat,Nat)],Nat) -> BX Nat
-main = \x -> case* x of 
-              (l,k) -> snd (pin l (\y -> lookup y k))
-                 with (\v -> True)
-                 reconciled by (\s v -> s) 
+lookup :: BX ([(Nat,Nat)],Nat) -> BX Nat
+lookup = \x -> case* x of 
+              (l,k) -> snd (pin l (\y -> lookup_ y k))
+                        with (\x1 -> True)
+                        reconciled by (\x0 -> \x1 -> x0) 
 
--- pin :: Ba -> (a -> Bb) -> B (a,b)
-
-lookup :: [(Nat,Nat)] -> BX Nat -> BX Nat  
-lookup = \l -> \k -> case l of 
+lookup_ :: [(Nat,Nat)] -> BX Nat -> BX Nat  
+lookup_ = \l -> \k -> case l of 
                      (k1,v1) : l1 -> 
                                     case* k of
                                     k' | eqNat k' k1 -> !v1
                                         with (\x1 -> eqNat x1 v1)
                                         reconciled by (\x0 -> \x1 -> k1)
-                                    k' | not (eqNat k' k1) -> lookup l1 k' 
+                                    k' | not (eqNat k' k1) -> lookup_ l1 k' 
                                         with (\x1 -> not (eqNat x1 v1))
                                         reconciled by (\x0 -> \x1 -> (S k1))    
                                         

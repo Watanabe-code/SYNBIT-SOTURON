@@ -18,6 +18,13 @@ idNat n0 = let* (n1,m) = pin n0 (\x -> newNat x) in
            let* (n2,()) = pin n1 (\y -> deleteNat y m) in 
            n2
 
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+f :: BX Nat -> BX (Nat,Nat)
+f n = pin n (\x -> newNat x)
+
 --最初のpinではBX Natの複製をしている.二つ目のpinでは複製した二つのデータが一致していれば，
 --一つにしている．そのため，直観的には当然機能してほしい関数である．Sparclではこれが通るが，
 --HOBiTでは動作しない．これには，pinの動作が関係している．pin導入以前のHOBiTでは，put実行の際に
@@ -37,3 +44,8 @@ idNat n0 = let* (n1,m) = pin n0 (\x -> newNat x) in
 --pinを追加した場合のwell-behavednessについても後に議論を踏まえ，論文に提示したい．
 --また，observeの他の例としては，zipがあげられる．これについては写真を参考にして，コードの記述試みるとよいだろう．
 --もし，可能であればnubについても議論したい．
+
+beq :: BX(Nat,Nat) -> BX Nat
+beq t = let* (n,m) = t in  
+        let* (n1,()) = pin n (\x -> deleteNat x m) in 
+        n1 

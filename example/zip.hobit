@@ -1,0 +1,132 @@
+--ビューの更新が，要素数が増える変更であれば当然失敗する．
+--要素数が変更しなければ，成功する．
+--要素数が減少する時に元の要素数が多いリストよりも要素数が2個以上すくする更新では，所望の出力をしない．
+--例
+--:put mainzip  ([1,2,3],["a","b","c","d"]) [(4, "d"),(2, "b")] = ([4,2], ["d","b","d"])
+--型が決まっていれば，適当なreconciliation functionにすることで，要素数が増えた場合も所望の動作をさせられる?
+--例
+--:put mainzip ([1,2],["a","b","c"]) [(1,"p"),(2,"q"),(3,"r"),(4,"s")] = ([1,2,3,4],["p","q","r","s","c"]) 
+--???
+--2/15要素数が変更ある場合はうまく行かない.
+
+mainzip :: BX ([a],[b]) -> BX [(a,b)]
+mainzip bt = observe bt (restlist) (subzip)
+
+subzip :: Either [a] [b] -> BX ([a],[b]) -> BX [(a,b)]
+subzip lr t = case* t of
+                ([],l2)             -> ![]
+                                       with (\x1 -> andAlso (null x1) (isright lr))
+                                       reconciled by (\x0 -> \x1 -> ([],realright lr))
+                (l1,[])             -> ![] 
+                                       with (\x1 -> andAlso (null x1) (not (isright lr)))
+                                       reconciled by (\x0 -> \x1 -> (realleft lr,[]))
+                (s1:rest1,s2:rest2) -> (|(s1,s2) : subzip lr (|(rest1,rest2)|)|)
+                                       with (\x1 -> not (null x1))
+                                       reconciled by (\x0 -> \x1 -> unzip lr x1)
+
+smainzip :: BX ([a],[b]) -> BX [(a,b)]
+smainzip bt = observe bt (id) (ssubzip)
+
+id :: a -> a
+id x = x
+
+ssubzip :: ([a],[b]) -> BX ([a],[b]) -> BX [(a,b)]
+ssubzip t bt = case* bt of
+                ([],l2)             -> ![]
+                                       with (\x1 -> andAlso (null x1) (sisright t))
+                                       reconciled by (\x0 -> \x1 -> sbewithnl t)
+                (l1,[])             -> ![] 
+                                       with (\x1 -> andAlso (null x1) (not (sisright t)))
+                                       reconciled by (\x0 -> \x1 -> sbewithnl t)
+                (s1:rest1,s2:rest2) -> (|(s1,s2) : ssubzip (det t) (|(rest1,rest2)|)|)
+                                       with (\x1 -> not (null x1))
+                                       reconciled by (\x0 -> \x1 -> sapen x1 t)
+
+sapen :: [(a,b)] -> ([a],[b]) -> ([a],[b])
+sapen p (l,r) = let (a,b) = normalzip p 
+                in (append a l , append b r)
+
+normalzip :: [(a,b)] -> ([a],[b])
+normalzip s = case s of 
+                [] -> ([],[])
+                (x,y):rest -> let (xs,ys) = normalzip rest
+                              in (x:xs,y:ys)
+
+det :: ([a],[b]) -> ([a],[b])
+det t = case t of
+          (l:ls,r:rs) -> (ls,rs)
+          (l:ls,[])   -> (ls,[])
+          ([],r:rs)   -> ([],rs)
+          ([],[])       -> ([],[])
+
+sisright :: ([a],[b]) -> Bool
+sisright t = case t of 
+               ([],r)        -> True
+               (l,[])        -> False
+               (l:ls , r:rs) -> sisright (ls,rs)
+
+sbewithnl :: ([a],[b]) -> ([a],[b])
+sbewithnl t = case t of 
+               ([],r)        -> ([],r)
+               (l,[])        -> (l,[])
+               (l:ls , r:rs) -> sbewithnl (ls,rs)
+
+unzip :: Either [a] [b] -> [(a,b)] -> ([a],[b])
+unzip e s = case s of 
+              []         -> ([],[])
+              (x,y):rest -> let (xs,ys) = unzip e rest
+                            in case e of 
+                                 Right a -> (x:xs , y : append ys a)
+                                 Left a  -> (x : append xs a, y:ys)
+
+append :: [a] -> [a] -> [a]
+append x y = case x of
+               []    -> y 
+               s : t -> s : append t y
+
+restlist :: ([a],[b]) -> Either [a] [b]
+restlist t = case t of 
+               ([],l2)       -> Right l2 
+               (l1,[])       -> Left l1 
+               (s1:r1,s2:r2) -> restlist (r1,r2)
+
+realright :: Either [a] [b] -> [b]
+realright e = case e of 
+                Right x -> x 
+                Left _  -> []
+
+realleft :: Either [a] [b] -> [a]
+realleft e = case e of
+               Right _ -> []
+               Left x  -> x
+ 
+observe :: BX a -> (a -> b) -> (b -> BX a -> BX c) -> BX c
+observe e1 f e2 = case* (pin e1 (\x -> !(f x))) of 
+                  (p,q) -> case* (pin q (\r -> e2 r p)) of 
+                             (s,t) -> t 
+                                      with (\x1 -> True)
+                                      reconciled by (\x0 -> \x1 -> x0)
+                           with (\x1 -> True)
+                           reconciled by (\x0 -> \x1 -> x0) 
+
+isright :: Either [a] [b] -> Bool
+isright (Left _) = False
+isright (Right _) = True
+
+snd :: BX (a,b) -> BX b
+snd t = let* (a,b) = t in b
+
+null :: [a] -> Bool
+null [] = True
+null _ = False
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False
+
+--仮定:ビューの更新があっても，要素数は変更できない．
+--基本的なアイデアはl1,l2の要素数が大きい方の残りのrestをpinで渡す．

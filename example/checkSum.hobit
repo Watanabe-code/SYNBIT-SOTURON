@@ -1,0 +1,40 @@
+-- get f : [10,1,2,3,4] = [1,2,3,4]
+-- put f : [6,7,8] = [21,6,7,8]
+
+data Nat = Z | S Nat 
+
+int2nat :: Int -> Nat
+int2nat 0 = Z 
+int2nat n = S (int2nat (n - 1))
+
+--pin : Ba -> (a -> Bb) -> B(a,b)
+--内部関数f : [Int] -> BInt -> ()
+
+--checkSum :: BX [Int] -> BX [Int]
+--checkSum xs = let* (y : ys)  = xs in
+--              let* (zs , ()) = pin ys (\a -> f (sum a) y) in
+--              zs
+
+--f :: Int -> BX Int -> BX ()
+--f xs bi = 
+
+add :: Nat -> Nat -> Nat
+add n m = case n of
+             Z    -> m 
+             S n' -> S (add n' m)
+ 
+sum :: [Nat] -> Nat
+sum l = case l of
+           []       -> Z
+           s : rest -> add s (sum rest)
+
+checkSum :: BX [Nat] -> BX [Nat]
+checkSum xs = let* (y : ys)  = xs in
+              let* (zs , ()) = pin ys (\a -> checkNat (sum a) y) in
+              zs
+
+checkNat :: Nat -> BX Nat -> BX ()
+checkNat n bm = case n of
+                  Z    -> let* Z = bm in ()
+                  S n' -> let* (S m') = bm in checkNat n' m'
+

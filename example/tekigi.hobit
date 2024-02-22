@@ -4,7 +4,7 @@ addinj n = liftInj (\x -> x + n)(\x -> x - n)
 
 addlift :: Int -> BX Int -> BX Int
 addlift n = lift (\x -> x + n) (\x -> \y -> x - y)
---lift ()(...)の部分はgetしたものx,update view yを受け取って演算
+--lift ()(...)の部分は元のソースx,update view yを受け取って演算
 
 data Nat = Z | S Nat
 
@@ -21,5 +21,11 @@ deleteNat t = liftInj (\x -> case (eqNat t x) of True -> ())(\x -> t)
 int2nat :: Int -> Nat
 int2nat 0 = Z
 int2nat n = S (int2nat (n - 1))
+
+mergeNat :: BX (Nat , Nat) -> BX Nat
+mergeNat t = let* (n,m)   = t in
+             let* (n1,()) = pin n (\x -> deleteNat x m) in
+             n1
+
 
 

@@ -7,10 +7,7 @@ newNat n = case n of
 
 deleteNat :: Nat -> BX Nat -> BX ()
 deleteNat n bm = case n of
-  Z -> case* bm of 
-         Z -> ()
-              with (\x1 -> True)
-              reconciled by (\x0 -> \x1 -> x0)
+  Z    -> let* Z = bm in ()
   S n' -> let* (S m') = bm in deleteNat n' m'
 
 idNat :: BX Nat -> BX Nat 
@@ -48,4 +45,6 @@ f n = pin n (\x -> newNat x)
 beq :: BX(Nat,Nat) -> BX Nat
 beq t = let* (n,m) = t in  
         let* (n1,()) = pin n (\x -> deleteNat x m) in 
-        n1 
+        n1
+
+ 

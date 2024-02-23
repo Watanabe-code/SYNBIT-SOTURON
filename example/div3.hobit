@@ -19,6 +19,30 @@ div3subB m n =
                                                  else if (eqNat m (S Z)) then S (S (S (S Z)))
                                                  else S (S (S (S (S Z)))))
 
+div3 :: BX Nat -> BX (Nat , Nat)
+div3 n = case* n of
+         Z            -> (Z , Z)
+                         with (\v -> case v of (x,y) -> andAlso (eqNat y Z) (isZ x))
+                         reconciled by (\s v -> Z)
+         S Z          -> (Z , S Z)
+                         with (\v -> case v of (x,y) -> andAlso (eqNat y (S Z)) (isZ x))
+                         reconciled by (\s v -> S Z)
+         S (S Z)      -> (Z , S (S Z)) 
+                         with (\v -> case v of (x,y) -> andAlso (eqNat y (S (S Z))) (isZ x))
+                         reconciled by (\s v ->S (S Z))
+         S (S (S n')) -> let* (x,y) = div3 n' in (S x , y)
+                         with (\v -> case v of (x,y) -> not (isZ x))
+                         reconciled by (\s v -> case v of (x,y) -> if (eqNat y Z) then S (S (S Z)) 
+                                                                   else if (eqNat y (S Z)) then S (S (S (S Z)))
+                                                                   else S (S (S (S (S Z)))))
+
+div3main :: BX Nat -> BX Nat
+div3main n = fst (div3 n)
+
+fst :: BX (a,b) -> BX a
+fst t = let* (x,y) = t in
+        x
+
 
 data Nat = Z 
          | S Nat 

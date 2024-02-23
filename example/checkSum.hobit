@@ -38,3 +38,10 @@ checkNat n bm = case n of
                   Z    -> let* Z = bm in ()
                   S n' -> let* (S m') = bm in checkNat n' m'
 
+ch :: BX (Nat,[Nat]) -> BX [Nat]
+ch t = let* (y,ys) = t in
+       f y ys 
+
+f :: BX Nat -> BX [Nat] -> BX [Nat]
+f y ys = let* (zs,()) = pin ys (\x -> checkNat (sum x) y) in
+         zs 

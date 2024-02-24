@@ -27,5 +27,31 @@ mergeNat t = let* (n,m)   = t in
              let* (n1,()) = pin n (\x -> deleteNat x m) in
              n1
 
+f :: BX Nat -> BX Nat -> BX Bool
+f n m = case* n of
+          Z    -> case* m of 
+                    Z    -> True
+                            with (\v -> v)
+                            reconciled by (\s v -> Z)
+                    S m' -> False
+                            with (\v -> not v)
+                            reconciled by (\s v -> (S s))
+                  with (\v -> True)
+                  reconciled by (\s v -> s)
+          S n' -> case* m of 
+                    Z    -> False
+                            with (\v -> not v)
+                            reconciled by (\s v -> Z)
+                    S m' -> f n' m'
+                            with (\v -> True)
+                            reconciled by (\s v ->(S s))
+                  with (\v -> True)
+                  reconciled by (\s v -> s)        
 
+h :: BX (Nat,Nat) -> BX Bool
+h t = let* (a,b) = t in 
+      f a b
 
+not :: Bool -> Bool
+not True = False
+not False = True

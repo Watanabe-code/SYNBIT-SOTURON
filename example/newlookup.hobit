@@ -1,0 +1,84 @@
+data Nat = Z
+         | S Nat
+
+fst :: BX (a,b) -> BX a
+fst t = let* (x,y) = t in
+        x 
+
+snd :: BX (a,b) -> BX b
+snd t = let* (x,y) = t in
+        y
+
+third :: BX (a,b,c) -> BX c
+third t = let* (x,y,z) = t in 
+          z
+
+eqNat :: Nat -> Nat -> Bool
+eqNat n m = case (n, m) of
+  (Z, Z)       -> True
+  (S n', Z)    -> False
+  (Z, S m')    -> False
+  (S n', S m') -> eqNat n' m'
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+andAlso :: Bool -> Bool -> Bool
+andAlso True True = True
+andAlso x y = False
+
+orElse :: Bool -> Bool -> Bool
+orElse False False = False
+orElse x y = True
+
+int2nat :: Int -> Nat
+int2nat 0 = Z
+int2nat n = S (int2nat (n - 1))
+
+forth :: BX (a,b,c,d) -> BX d 
+forth t = let* (p,q,r,s) = t in
+          s 
+
+
+lookup :: BX ([(Nat,Nat)],Nat) -> BX Nat
+lookup t =  let* (xs,k) = t in 
+            third (sub xs k)
+
+sub :: BX [(Nat,Nat)] -> BX Nat -> BX ([(Nat,Nat)],Nat,Nat)
+sub l k = let* ((k1,v1) : ls) = l in 
+          case* (k1,k) of
+          (x,y) | not (eqNat x y) -> let* (lx,kx,vx) = sub ls k in 
+                                     ((k1,v1) : lx,kx,vx)
+                                     with (\v -> not (check v))
+                                     reconciled by (\s v -> getkv v)
+          (x,y) | eqNat x y       -> (l,k,v1)
+                                     with (\v -> not (check v))
+                                     reconciled by (\s v -> yeskv v) 
+          (x,y) | eqNat x y       -> (l,k,v1)
+                                     with (\v -> check v)
+                                     reconciled by (\s v -> yeskv v) 
+          (x,y) | not (eqNat x y) -> let* (lx,kx,vx) = sub ls k in 
+                                     ((k1,v1) : lx,kx,vx)
+                                     with (\v -> check v)
+                                     reconciled by (\s v -> getkv v)
+
+--変更なければ，True
+check :: ([(Nat,Nat)],Nat,Nat) -> Bool
+check t = let (l,k,v) = t in
+          let ((k1,v1) : l1) = l in 
+          if (eqNat k k1) 
+          then (eqNat v v1)
+          else check (l1,k,v)
+
+getkv :: ([(Nat,Nat)],Nat,Nat) -> (Nat,Nat)
+getkv t = let (l,k,v) = t in
+          let ((k1,v1) : l1) = l in
+          if (eqNat v v1) 
+          then (k,k1)
+          else getkv (l1,k,v)
+
+yeskv :: ([(Nat,Nat)],Nat,Nat) -> (Nat,Nat)
+yeskv t = let (l,k,v) = t in
+          (k,k)
+
